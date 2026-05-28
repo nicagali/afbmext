@@ -1,0 +1,53 @@
+# default matplotlibrc file: https://matplotlib.org/stable/tutorials/introductory/customizing.html
+
+#Ticks
+xtick.labelsize: 20
+ytick.labelsize: 20
+xtick.direction: in
+ytick.direction: in
+
+xtick.top       : True
+xtick.bottom    : True
+ytick.left      : True
+ytick.right     : True
+
+# Tick lengths
+xtick.major.size : 8
+xtick.minor.size : 4
+
+ytick.major.size : 8
+ytick.minor.size : 4
+
+# Tick width
+xtick.major.width : 2
+ytick.major.width : 2
+
+#Axes
+axes.labelsize: 23
+axes.titlesize: 20
+axes.titlelocation: center
+axes.linewidth:     2.0
+
+#Colors
+axes.prop_cycle: cycler("color", ["#AEA435", "#FEBA27", "#76B3D0", "#F4BAEA", "#FE6C23"  ]) 
+
+#Legend
+legend.fontsize: 20
+legend.framealpha:    1.0
+legend.edgecolor:     1.0
+
+font.size:    22.0
+
+
+#Figure
+figure.autolayout: True
+
+#Saving
+#savefig.dpi:  1000
+savefig.bbox: tight
+savefig.transparent: False
+savefig.facecolor: white
+
+#Text
+text.usetex : True
+text.latex.preamble : \usepackage{amsmath}
