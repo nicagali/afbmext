@@ -24,6 +24,7 @@ class afbm:
         dB_H = np.diff(B_H) * (self.n / self.T)
         return dB_H
 
+    # Prepare the arrays and noise, calculate integration coefficients for the solver
     def prepare(self):
         self.r = np.zeros((2, self.n))
         self.phi = np.zeros(self.n)
