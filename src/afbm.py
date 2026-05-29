@@ -4,15 +4,17 @@ from scipy.special import gamma, gammainc
 from numba_functions import get_cnj, solver
 
 class afbm:
-    def __init__(self, alpha, T, h=0.01, v=1, B_T=1, B_R=1, KBT=1):
+    def __init__(self, alpha, T, h=0.01, v=1, mu=0, B_T=1, B_R=1, KBT=1):
         self.alpha = alpha
         self.H = 1 - alpha / 2
 
         self.T = T
         self.h = h
         self.n = int(T / h)
+        self.t = np.arange(self.n) * h
 
         self.v = v
+        self.mu = mu
         self.KBT = KBT
 
         self.B_T = B_T
@@ -30,6 +32,7 @@ class afbm:
     def prepare(self):
         self.r = np.zeros((2, self.n))
         self.phi = np.zeros(self.n)
+        self.phi[0] = np.random.uniform(0, 2*np.pi)
 
         self.coeff_noise = self.h**self.alpha * gamma(2 - self.alpha)
 
@@ -42,23 +45,31 @@ class afbm:
 
     def solve(self):
         self.prepare()
-        solver(self.r,self.phi,self.xi_T,self.xi_R,self.cnj,self.v,self.coeff_noise,self.h,self.n)
+        solver(self.r,self.phi,self.xi_T,self.xi_R,self.cnj,self.v,self.mu,self.coeff_noise,self.h,self.n)
         return self.r, self.phi
 
     # Mean squared analytical
     def get_msd_analytical(self):
 
+
         alpha = self.alpha
         v = self.v
-        t = np.arange(self.n) * self.h
+        t = self.t
 
         DR = self.A_R**2 *gamma(3 - alpha) / (self.B_R**2 * gamma(alpha+1))
         DT = self.A_T**2 *gamma(3 - alpha) / (self.B_T**2 * gamma(alpha+1))
 
-        coeff = ( 2*v**2 / (alpha*((DR)**(2/alpha))))
-        gamma1 = gamma(1/alpha)*gammainc(1/alpha, (DR*t**(alpha)))
-        gamma2 = gamma(2/alpha)*gammainc(2/alpha, (DR*t**(alpha)))
+        angular = DR * t**alpha / gamma(alpha + 1)
+        passive = 2 * DT * t**alpha / gamma(alpha + 1)
 
-        self.phi_msd_analytical = DR * t**alpha 
-        self.r_msd_analytical = 2*DT * t**alpha + coeff*( gamma1*((DR)**(1/alpha))*t - gamma2  ) 
-        
+        z = (DR / 2) * t**alpha
+
+        gamma1 = gamma(1 / alpha) * gammainc(1 / alpha, z)
+        gamma2 = gamma(2 / alpha) * gammainc(2 / alpha, z)
+
+        coeff = 2 * v**2 / (alpha * (DR / 2)**(2 / alpha))
+
+        active = coeff * ((DR / 2)**(1 / alpha) * t * gamma1 - gamma2)
+
+        self.phi_msd_analytical = angular
+        self.r_msd_analytical = passive + active
