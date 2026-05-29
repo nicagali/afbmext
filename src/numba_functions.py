@@ -62,12 +62,10 @@ def solve_phi_torque(k, phi, v, xi_R, cnj, h, coeff_noise, torque_strength, max_
             dtorque += cnj[k - i] * ( -np.sin(phi_trial) * np.sin(phi_i) -np.cos(phi_trial) * np.cos(phi_i) )
 
         F = ( phi_trial - phi_prev + sum_phi + torque_strength * v * torque * h - noise )
-        # print("phi_trial", phi_trial, "sum_phi", sum_phi, "torque", torque, "noise", noise)
 
         dF = 1.0 + torque_strength * v * dtorque * h
 
         step = F / dF
-        # print(phi_trial, F, dF, step)
         phi_trial -= step
 
         if np.abs(step) < tol:
@@ -78,7 +76,6 @@ def solve_phi_torque(k, phi, v, xi_R, cnj, h, coeff_noise, torque_strength, max_
 @njit
 def solver(r, phi, xi_T, xi_R, cnj, v, mu, coeff_noise, h, n):
     for k in range(1, n):
-        # print("-------- step", k, "--------")
 
         if mu > 0:
             phi[k] = solve_phi_torque(k, phi, v, xi_R, cnj, h, coeff_noise, mu)
