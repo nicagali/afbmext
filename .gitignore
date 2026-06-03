@@ -3,3 +3,4 @@ data/
 .vscode/
 src/__pycache__/
 nohup.out
+slurm_jobs/
