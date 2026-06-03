@@ -2,3 +2,4 @@ plots/
 data/
 .vscode/
 src/__pycache__/
+slurm_jobs/
