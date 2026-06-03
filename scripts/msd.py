@@ -5,15 +5,15 @@ sys.path.append("src/")
 from afbm import afbm
 from tqdm import tqdm
 
-alpha = 0.9
-T = 10
-h = 0.001
-v = 100
-mu = 1
+alpha = float(sys.argv[1])
+T = float(sys.argv[2])
+h = float(sys.argv[3])
+v = float(sys.argv[4])
+mu = float(sys.argv[5])
+realizations = int(sys.argv[6])
 B_T = 1
 B_R = 1
 KBT = 1
-realizations = 100
 n_jobs=-1 #use all cores
 
 def msd(alpha, T, h, v, mu, B_T, B_R, KBT, seed=None):
