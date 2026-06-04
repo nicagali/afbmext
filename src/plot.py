@@ -1,6 +1,6 @@
 import numpy as np
 
-def plot_msd(ax, eq, component, data_path):
+def plot_msd(ax, eq, component, add_analytics, label, data_path):
 
     # simulation data
     data = np.load(data_path)
@@ -12,10 +12,21 @@ def plot_msd(ax, eq, component, data_path):
     t_analytical = np.arange(eq.n) * eq.h
     msd_an = eq.r_msd_analytical if component == "r" else eq.phi_msd_analytical
 
-    ax.plot(t, msd_sim, label=fr"$\alpha={eq.alpha}$")
-    ax.plot(t_analytical, msd_an, color = 'black', linestyle="--")
+    ax.plot(t, msd_sim, label=label)
+    if add_analytics:
+        ax.plot(t_analytical, msd_an, color = 'black', linestyle="--")
     ax.set_xlabel("t")
+
     ylabel = r'$\langle (\boldsymbol{{r}}(t)-\boldsymbol{{r}}_0)^2 \rangle$' if component == "r" else r'$\langle (\phi(t)-\phi_0)^2 \rangle$'
     ax.set_ylabel(ylabel)
     ax.legend()
+
+def add_trend(ax, tmin, tmax, exponent, yref=1, tref=1, **kwargs):
+
+    t = np.arange(tmin,tmax,0.0001)
+
+    y = yref * (t / tref)**exponent
+
+    ax.plot(t, y, label=rf'$~t^{{{exponent}}}$', **kwargs)
+
 
