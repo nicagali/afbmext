@@ -20,14 +20,14 @@ DATA_PATH = f"data/msd_a{alpha}_T{T}_h{h}_v{v}_mu{mu}_r{realizations}.npz"
     
 fig, ax = plt.subplots(figsize=(12, 9))
 eq = afbm(alpha, T, h, v, mu, B_T, B_R, KBT)
-plot.plot_msd(ax=ax,eq=eq, component="r", data_path=DATA_PATH)
+plot.plot_msd(ax=ax,eq=eq, component="r", add_analytics=True, label=fr"$\alpha={eq.alpha}$", data_path=DATA_PATH)
 ax.set_xscale("log")    
 ax.set_yscale("log")
 plt.savefig(f"plots/rmsd_a{alpha}_T{T}_h{h}_v{v}_mu{mu}_r{realizations}.png", dpi=200)
 
 fig, ax = plt.subplots(figsize=(12, 9))
 eq = afbm(alpha, T, h, v, mu, B_T, B_R, KBT)
-plot.plot_msd(ax=ax,eq=eq, component="phi", data_path=DATA_PATH)
+plot.plot_msd(ax=ax,eq=eq, component="phi", add_analytics=False, label=fr"$\alpha={eq.alpha}$", data_path=DATA_PATH)
 ax.set_xscale("log")    
 ax.set_yscale("log")
 plt.savefig(f"plots/phimsd_a{alpha}_T{T}_h{h}_v{v}_mu{mu}_r{realizations}.png", dpi=200)
