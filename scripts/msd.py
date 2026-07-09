@@ -5,17 +5,6 @@ sys.path.append("src/")
 from afbm import afbm
 from tqdm import tqdm
 
-alpha = float(sys.argv[1])
-T = float(sys.argv[2])
-h = float(sys.argv[3])
-v = float(sys.argv[4])
-mu = float(sys.argv[5])
-realizations = int(sys.argv[6])
-B_T = 1
-B_R = 1
-KBT = 1
-n_jobs=-1 #use all cores
-
 def msd(alpha, T, h, v, mu, B_T, B_R, KBT, seed=None):
 
     if seed is not None:
@@ -48,6 +37,17 @@ def ensemble_msd(alpha, T, h, v, mu, B_T, B_R, KBT, realizations, n_jobs=-1):
     return t, pos_msd, ang_msd
 
 if __name__ == "__main__":
+
+    alpha = float(sys.argv[1])
+    T = float(sys.argv[2])
+    h = float(sys.argv[3])
+    v = float(sys.argv[4])
+    mu = float(sys.argv[5])
+    realizations = int(sys.argv[6])
+    B_T = 1
+    B_R = 1
+    KBT = 1
+    n_jobs=-1 #use all cores
 
     t, msd_r, msd_phi = ensemble_msd(alpha=alpha, T=T, h=h, v=v, mu=mu, B_T=B_T, B_R=B_R, KBT=KBT, realizations=realizations, n_jobs=-1)
     np.savez(f"data/msd_a{alpha}_T{T}_h{h}_v{v}_mu{mu}_r{realizations}.npz", t=t, msd_r=msd_r, msd_phi=msd_phi)
