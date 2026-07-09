@@ -59,8 +59,10 @@ class afbm:
         DR = self.A_R**2 *gamma(3 - alpha) / (self.B_R**2 * gamma(alpha+1))
         DT = self.A_T**2 *gamma(3 - alpha) / (self.B_T**2 * gamma(alpha+1))
 
-        angular = DR * t**alpha / gamma(alpha + 1)
-        passive = 2 * DT * t**alpha / gamma(alpha + 1)
+
+
+        angular = DR * t**alpha 
+        passive = 2 * DT * t**alpha
 
         z = (DR / 2) * t**alpha
 
