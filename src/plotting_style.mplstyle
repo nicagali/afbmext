@@ -32,7 +32,7 @@ axes.linewidth:     2.0
 axes.prop_cycle: cycler("color", ["#AEA435", "#FEBA27", "#76B3D0", "#F4BAEA", "#FE6C23"  ]) 
 
 #Legend
-legend.fontsize: 20
+legend.fontsize: 15
 legend.framealpha:    1.0
 legend.edgecolor:     1.0
 
