@@ -36,6 +36,8 @@ class afbm:
 
         self.coeff_noise = self.h**self.alpha * gamma(2 - self.alpha)
 
+        self.torque_strength = self.mu * self.B_T
+
         self.xi_R = self.A_R * self.make_B_H() / self.B_R
         self.xi_T = np.zeros((2, self.n))
         self.xi_T[0] = self.A_T * self.make_B_H() / self.B_T
@@ -43,9 +45,15 @@ class afbm:
 
         self.cnj = get_cnj(self.alpha, self.n)
 
+        if np.isscalar(self.v):
+            self.v_array = np.full(self.n, float(self.v))
+        else:
+            self.v_array = np.asarray(self.v, dtype=np.float64)
+            self.v = self.v_array[0]    #for analytical results, we take the first value of the array as the constant speed (to be deicded in the future)
+
     def solve(self):
         self.prepare()
-        solver(self.r,self.phi,self.xi_T,self.xi_R,self.cnj,self.v,self.mu,self.coeff_noise,self.h,self.n)
+        solver(self.r,self.phi,self.xi_T,self.xi_R,self.cnj,self.v_array,self.torque_strength,self.coeff_noise,self.h,self.n)
         return self.r, self.phi
 
     # Mean squared analytical

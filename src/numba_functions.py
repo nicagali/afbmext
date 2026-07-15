@@ -20,19 +20,6 @@ def solve_phi_no_torque(k, phi, xi_R, cnj, coeff_noise):
 
     return phi[k - 1] + coeff_noise * xi_R[k] - sum_phi
 
-@njit
-def sum_term_torque(phi_trial, phi, k, cnj):
-    torque = 0.0
-
-    for i in range(1, k):
-        phi_i = phi[i]
-
-        torque += cnj[k - i] * (
-            np.cos(phi_trial) * np.sin(phi_i)
-            - np.sin(phi_trial) * np.cos(phi_i)
-        )
-
-    return torque
 
 @njit
 def solve_phi_torque(k, phi, v, xi_R, cnj, h, coeff_noise, torque_strength, max_iter=100, tol=1e-10 ):
@@ -75,23 +62,35 @@ def solve_phi_torque(k, phi, v, xi_R, cnj, h, coeff_noise, torque_strength, max_
 
 @njit
 def solver(r, phi, xi_T, xi_R, cnj, v, mu, coeff_noise, h, n):
+
+    # Initialize mx and my for the active term
+    mx = np.zeros(n)
+    my = np.zeros(n)
+    mx[0] = v[0] * np.cos(phi[0]) * h
+    my[0] = v[0] * np.sin(phi[0]) * h
+
+    # Main loop for the solver
     for k in range(1, n):
 
-        if mu > 0:
-            phi[k] = solve_phi_torque(k, phi, v, xi_R, cnj, h, coeff_noise, mu)
-        else:
-            phi[k] = solve_phi_no_torque(k, phi, xi_R, cnj, coeff_noise)
+        # if mu > 0:
+        #     phi[k] = solve_phi_torque(k, phi, v, xi_R, cnj, h, coeff_noise, mu)
+        # else:
+        phi[k] = solve_phi_no_torque(k, phi, xi_R, cnj, coeff_noise)
+
+        # Update mx and my for the active term
+        mx[k] = mx[k-1] + v[k] * np.cos(phi[k]) * h
+        my[k] = my[k-1] + v[k] * np.sin(phi[k]) * h
 
         # Active term
-        sum_nx = 0.0
-        sum_ny = 0.0
+        active_x = 0.0
+        active_y = 0.0
 
         for i in range(1, k):
-            sum_nx += cnj[k - i] * np.cos(phi[i]) * h
-            sum_ny += cnj[k - i] * np.sin(phi[i]) * h
+            active_x += cnj[k - i] * (mx[i] - mx[i - 1]) 
+            active_y += cnj[k - i] * (my[i] - my[i - 1]) 
 
-        active_x = v * sum_nx + v * np.cos(phi[k]) * h
-        active_y = v * sum_ny + v * np.sin(phi[k]) * h
+        active_x += mx[k] - mx[k - 1]  
+        active_y += my[k] - my[k - 1]  
 
         # Position memory term
         sum_history_x = 0.0
