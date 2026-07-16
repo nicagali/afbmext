@@ -23,7 +23,7 @@ def solve_phi_no_torque(k, phi, xi_R, cnj, coeff_noise):
 
 
 @njit
-def solve_phi_torque(k, phi, v, xi_R, cnj, h, coeff_noise, torque_strength, max_iter=100, tol=1e-10 ):
+def solve_phi_torque(k, phi, v, xi_R, cnj, h, coeff_noise, B_T, B_R, torque_strength, max_iter=100, tol=1e-10 ):
 
     phi_prev = phi[k - 1]
     phi_trial = phi_prev
@@ -44,14 +44,14 @@ def solve_phi_torque(k, phi, v, xi_R, cnj, h, coeff_noise, torque_strength, max_
             phi_i = phi[i]
 
             # sin(phi_i - phi_trial)
-            torque += cnj[k - i] * ( np.cos(phi_trial) * np.sin(phi_i) - np.sin(phi_trial) * np.cos(phi_i) )
+            torque += cnj[k - i] * ( np.cos(phi_trial) * v[i] * np.sin(phi_i) - np.sin(phi_trial) * v[i] * np.cos(phi_i) )
 
             # derivative of sin(phi_i - phi_trial)
-            dtorque += cnj[k - i] * ( -np.sin(phi_trial) * np.sin(phi_i) -np.cos(phi_trial) * np.cos(phi_i) )
+            dtorque += cnj[k - i] * ( np.sin(phi_trial) * v[i] * np.sin(phi_i) + np.cos(phi_trial) * v[i] * np.cos(phi_i) )
 
-        F = ( phi_trial - phi_prev + sum_phi + torque_strength * v * torque * h - noise )
+        F = ( phi_trial - phi_prev + sum_phi + torque_strength * torque *  B_T / B_R * h - noise ) 
 
-        dF = 1.0 + torque_strength * v * dtorque * h
+        dF = 1.0 + torque_strength * dtorque *  B_T / B_R * h
 
         step = F / dF
         phi_trial -= step
@@ -62,7 +62,7 @@ def solve_phi_torque(k, phi, v, xi_R, cnj, h, coeff_noise, torque_strength, max_
     return phi_trial
 
 @njit
-def solver(r, phi, xi_T, xi_R, cnj, v, mu, coeff_noise, h, n):
+def solver(r, phi, xi_T, xi_R, cnj, v, mu, coeff_noise, B_T, B_R, h, n):
 
     # Initialize mx and my for the active term
     mx = np.zeros(n)
@@ -73,10 +73,10 @@ def solver(r, phi, xi_T, xi_R, cnj, v, mu, coeff_noise, h, n):
     # Main loop for the solver
     for k in range(1, n):
 
-        # if mu > 0:
-        #     phi[k] = solve_phi_torque(k, phi, v, xi_R, cnj, h, coeff_noise, mu)
-        # else:
-        phi[k] = solve_phi_no_torque(k, phi, xi_R, cnj, coeff_noise)
+        if mu > 0:
+            phi[k] = solve_phi_torque(k, phi, v, xi_R, cnj, h, coeff_noise, B_T, B_R, mu)
+        else:
+            phi[k] = solve_phi_no_torque(k, phi, xi_R, cnj, coeff_noise)
 
         # Active term
         active_x = 0.0
