@@ -53,7 +53,7 @@ class afbm:
 
     def solve(self):
         self.prepare()
-        solver(self.r,self.phi,self.xi_T,self.xi_R,self.cnj,self.v_array,self.torque_strength,self.coeff_noise,self.h,self.n)
+        solver(self.r,self.phi,self.xi_T,self.xi_R,self.cnj,self.v_array,self.torque_strength,self.coeff_noise,self.B_T,self.B_R,self.h,self.n)
         return self.r, self.phi
 
     # Mean squared analytical

@@ -7,6 +7,7 @@ from numba import njit
 @njit
 def get_cnj(alpha, n):
     cnj = np.zeros(n)
+    cnj[0] = 1 # We're using the rule 0**x = 0, for any x including 0
     for k in range(1, n):
         cnj[k] = (k + 1)**(1 - alpha) - k**(1 - alpha)
     return cnj
@@ -22,7 +23,7 @@ def solve_phi_no_torque(k, phi, xi_R, cnj, coeff_noise):
 
 
 @njit
-def solve_phi_torque(k, phi, v, xi_R, cnj, h, coeff_noise, torque_strength, max_iter=100, tol=1e-10 ):
+def solve_phi_torque(k, phi, v, xi_R, cnj, h, coeff_noise, B_T, B_R, torque_strength, max_iter=100, tol=1e-10 ):
 
     phi_prev = phi[k - 1]
     phi_trial = phi_prev
@@ -43,14 +44,14 @@ def solve_phi_torque(k, phi, v, xi_R, cnj, h, coeff_noise, torque_strength, max_
             phi_i = phi[i]
 
             # sin(phi_i - phi_trial)
-            torque += cnj[k - i] * ( np.cos(phi_trial) * np.sin(phi_i) - np.sin(phi_trial) * np.cos(phi_i) )
+            torque += cnj[k - i] * ( np.cos(phi_trial) * v[i] * np.sin(phi_i) - np.sin(phi_trial) * v[i] * np.cos(phi_i) )
 
             # derivative of sin(phi_i - phi_trial)
-            dtorque += cnj[k - i] * ( -np.sin(phi_trial) * np.sin(phi_i) -np.cos(phi_trial) * np.cos(phi_i) )
+            dtorque += cnj[k - i] * ( np.sin(phi_trial) * v[i] * np.sin(phi_i) + np.cos(phi_trial) * v[i] * np.cos(phi_i) )
 
-        F = ( phi_trial - phi_prev + sum_phi + torque_strength * v * torque * h - noise )
+        F = ( phi_trial - phi_prev + sum_phi + torque_strength * torque *  B_T / B_R * h - noise ) 
 
-        dF = 1.0 + torque_strength * v * dtorque * h
+        dF = 1.0 + torque_strength * dtorque *  B_T / B_R * h
 
         step = F / dF
         phi_trial -= step
@@ -61,7 +62,7 @@ def solve_phi_torque(k, phi, v, xi_R, cnj, h, coeff_noise, torque_strength, max_
     return phi_trial
 
 @njit
-def solver(r, phi, xi_T, xi_R, cnj, v, mu, coeff_noise, h, n):
+def solver(r, phi, xi_T, xi_R, cnj, v, mu, coeff_noise, B_T, B_R, h, n):
 
     # Initialize mx and my for the active term
     mx = np.zeros(n)
@@ -72,25 +73,20 @@ def solver(r, phi, xi_T, xi_R, cnj, v, mu, coeff_noise, h, n):
     # Main loop for the solver
     for k in range(1, n):
 
-        # if mu > 0:
-        #     phi[k] = solve_phi_torque(k, phi, v, xi_R, cnj, h, coeff_noise, mu)
-        # else:
-        phi[k] = solve_phi_no_torque(k, phi, xi_R, cnj, coeff_noise)
-
-        # Update mx and my for the active term
-        mx[k] = mx[k-1] + v[k] * np.cos(phi[k]) * h
-        my[k] = my[k-1] + v[k] * np.sin(phi[k]) * h
+        if mu > 0:
+            phi[k] = solve_phi_torque(k, phi, v, xi_R, cnj, h, coeff_noise, B_T, B_R, mu)
+        else:
+            phi[k] = solve_phi_no_torque(k, phi, xi_R, cnj, coeff_noise)
 
         # Active term
         active_x = 0.0
         active_y = 0.0
 
-        for i in range(1, k):
-            active_x += cnj[k - i] * (mx[i] - mx[i - 1]) 
-            active_y += cnj[k - i] * (my[i] - my[i - 1]) 
+        for i in range(1, k+1):
+            cnj_i = cnj[k - i]
+            active_x += cnj_i * v[i] * np.cos(phi[i]) * h
+            active_y += cnj_i * v[i] * np.sin(phi[i]) * h
 
-        active_x += mx[k] - mx[k - 1]  
-        active_y += my[k] - my[k - 1]  
 
         # Position memory term
         sum_history_x = 0.0
