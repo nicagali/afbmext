@@ -27,7 +27,7 @@ def ensemble_traj(alpha, T, h, v, mu, B_T, B_R, KBT, realizations, n_jobs=-1):
     pos_traj = np.array([r[0] for r in results])
     ang_traj = np.array([r[1] for r in results])
 
-    return t, ang_traj, pos_traj
+    return t, pos_traj, ang_traj
 
 if __name__ == "__main__":
 
