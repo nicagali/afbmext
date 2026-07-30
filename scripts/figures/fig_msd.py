@@ -7,16 +7,17 @@ import plot
 from afbm import afbm
 
 alpha = 0.9
-T = 100
-h = 0.001
-v = 200
-mu = 1
+T = 100.
+h = 0.01
+v = 200.
+mu = 1.
 B_T = 1
 B_R = 1
 KBT = 1
 realizations = 100
+sets = 2
 
-DATA_PATH = f"data/msd_a{alpha}_T{T}_h{h}_v{v}_mu{mu}_r{realizations}.npz"
+DATA_PATH = f"data/msd_a{alpha}_T{T}_h{h}_v{v}_mu{mu}_r{realizations}_sets{sets}.npz"
     
 fig, ax = plt.subplots(figsize=(12, 9))
 eq = afbm(alpha, T, h, v, mu, B_T, B_R, KBT)

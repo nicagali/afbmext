@@ -5,49 +5,50 @@ sys.path.append("src/")
 from afbm import afbm
 from tqdm import tqdm
 
-def msd(alpha, T, h, v, mu, B_T, B_R, KBT, seed=None):
 
-    if seed is not None:
-        np.random.seed(seed)
+def ensemble_msd(alpha, T, h, v, mu, sets, start_set, realizations):
 
-    sim = afbm(alpha, T, h, v, mu, B_T, B_R, KBT)
-    r, phi = sim.solve()
+    n = int(T/h)
+    sum_msd_r = np.zeros(n)
+    sum_msd_phi = np.zeros(n)
+    total_realizations = sets*realizations
 
-    dr = r - r[:, [0]]
-    dphi = phi - phi[0]
+    for set_id in range(start_set, start_set + sets):
 
-    pos_msd = dr[0]**2 + dr[1]**2
-    ang_msd = dphi**2
+        data = np.load(f"data/traj_a{alpha}_T{T}_h{h}_v{v}_" f"mu{mu}_r{realizations}_set{set_id}.npz")
 
-    return pos_msd, ang_msd
+        t = data["t"]
+        r = data["r_set"]          # shape: (realizations, 2, n)
+        phi = data["phi_set"]      # shape: (realizations, n)
 
-def ensemble_msd(alpha, T, h, v, mu, B_T, B_R, KBT, realizations, n_jobs=-1):
+        dr = r - r[:, :, [0]]
+        dphi = phi - phi[:, [0]]
 
-    sim0 = afbm(alpha, T, h, v, mu, B_T, B_R, KBT)
-    n = sim0.n
-    t = sim0.t
+        msd_r_set = np.sum(dr**2, axis=1)  # shape: (realizations, n)
+        msd_phi_set = dphi**2                # shape: (realizations, n)
 
-    seeds = np.random.randint(0, 2**32 - 1, size=realizations)
+        sum_msd_r += np.sum(msd_r_set, axis=0)
+        sum_msd_phi += np.sum(msd_phi_set, axis=0)
 
-    results = Parallel(n_jobs=n_jobs)(delayed(msd)(alpha, T, h, v, mu, B_T, B_R, KBT, seed) for seed in tqdm(seeds))
+    msd_r = sum_msd_r / total_realizations
+    msd_phi = sum_msd_phi / total_realizations
 
-    pos_msd = np.mean([r[0] for r in results], axis=0)
-    ang_msd = np.mean([r[1] for r in results], axis=0)
-
-    return t, pos_msd, ang_msd
+    return t, msd_r, msd_phi
 
 if __name__ == "__main__":
 
-    alpha = float(sys.argv[1])
-    T = float(sys.argv[2])
-    h = float(sys.argv[3])
-    v = float(sys.argv[4])
-    mu = float(sys.argv[5])
-    realizations = int(sys.argv[6])
+    alpha = 0.9
+    T = 100.
+    h = 0.01
+    v = 200.
+    mu = 1.
+    realizations = 100
+    sets = 2
+    start_set = 0
     B_T = 1
     B_R = 1
     KBT = 1
-    n_jobs=-1 #use all cores
 
-    t, msd_r, msd_phi = ensemble_msd(alpha=alpha, T=T, h=h, v=v, mu=mu, B_T=B_T, B_R=B_R, KBT=KBT, realizations=realizations, n_jobs=-1)
-    np.savez(f"data/msd_a{alpha}_T{T}_h{h}_v{v}_mu{mu}_r{realizations}.npz", t=t, msd_r=msd_r, msd_phi=msd_phi)
+    t, msd_r, msd_phi = ensemble_msd( alpha=alpha, T=T, h=h, v=v, mu=mu, sets=sets, start_set=start_set, realizations=realizations )
+
+    np.savez(f"data/msd_a{alpha}_T{T}_h{h}_v{v}_" f"mu{mu}_r{realizations}_sets{sets}.npz", t=t, msd_r=msd_r, msd_phi=msd_phi)
